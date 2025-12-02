@@ -6,10 +6,10 @@ export class Message {
   id!: number;
 
   @Column('text')
-  content!: string;
+  message!: string;
 
   @Column('datetime')
-  messageDate!: Date
+  date!: Date
 
   @Column({ type: 'text', length: 5 })
   type!: string

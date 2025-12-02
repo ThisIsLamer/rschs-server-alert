@@ -3,11 +3,16 @@ import * as cheerio from 'cheerio';
 import { database } from "./database";
 import { Message } from "./database/entities/Message";
 
+export type TMessage = { message: string, date: Date, type: string | null }
+
+export let latestMessage: TMessage | null = null
+
+const keywords = [...config.keywords.start, ...config.keywords.stop]
 export async function checkRSCHSStatus() {
   const html = await fetch(config.telegramChannelURL as string)
   const $ = cheerio.load(await html.text());
-  
-  const messages: { message: string, date: Date, type: string | null }[] = []
+
+  const messages: TMessage[] = []
   $('.tgme_widget_message_wrap').each((index, element) => {
     const message = $(element).html();
     if (!message) return;
@@ -16,7 +21,6 @@ export async function checkRSCHSStatus() {
     const $messageBlock = $message('.tgme_widget_message_text').text().replace(/\n/g, ' ').trim()
     const $messageDate = $message('time').attr('datetime')
 
-    const keywords = [...config.keywords.start, ...config.keywords.stop]
     const filteredMessage = keywords.some(keyword => $messageBlock.includes(keyword))
     if (!filteredMessage) return;
     
@@ -40,27 +44,27 @@ export async function checkRSCHSStatus() {
     await Promise.all(
       messages.map(async msg => {
         const exists = await messageEntity.findOne({
-          where: { messageDate: msg.date }
+          where: { date: msg.date }
         });
         return exists ? null : msg;
       })
     )
-  ).filter((msg): msg is { message: string; date: Date; type: string | null } => msg !== null);
+  ).filter((msg): msg is TMessage => msg !== null);
   
   if (!newMessages.length) return false
   for (const msg of newMessages) {
     await messageEntity.save({
-      content: msg.message,
-      messageDate: msg.date,
+      message: msg.message,
+      date: msg.date,
       type: msg.type as string
     })
   }
 
   const lastMessage = messages[messages.length - 1]
-  if (config.keywords.start.some(keyword => lastMessage.message.includes(keyword))) 
+  if (keywords.some(keyword => lastMessage.message.includes(keyword))) {
+    latestMessage = lastMessage
     return lastMessage
-  else if (config.keywords.stop.some(keyword => lastMessage.message.includes(keyword)))
-    return lastMessage
+  }
 
   return false
 }

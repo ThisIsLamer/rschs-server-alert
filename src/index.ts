@@ -1,70 +1,59 @@
 import 'reflect-metadata';
 import { initializeDatabase } from './database';
 import { config } from './config';
-import WebSocket, { WebSocketServer } from 'ws';
 import { checkRSCHSStatus } from './rschs';
+import Fastify from 'fastify';
+import websocket from '@fastify/websocket';
+import { alertRoutes, getLatestMessage } from './routes/alerts.controllers';
 
-interface ClientConnection {
-  ws: WebSocket;
-  isAlive: boolean;
-}
-
-const clients = new Set<ClientConnection>();
+const clients = new Set<any>();
 
 (async () => {
   await initializeDatabase();
   
-  const wss = new WebSocketServer({ port: config.port });
-  console.log(`Веб сокет сервер запущен на порту ${config.port}`);
+  const fastify = Fastify({ logger: true });
   
-  wss.on('connection', (ws) => {
-    const client: ClientConnection = { ws, isAlive: true };
-    clients.add(client);
-    console.log(`Клиент подключен. Всего клиентов:`, clients.size);
-    
-    ws.on('pong', () => {
-      client.isAlive = true;
-    });
-    
-    ws.on('close', () => {
-      clients.delete(client);
-      console.log('Клиент отключен. Всего клиентов:', clients.size);
-    });
-    
-    ws.on('error', (error) => {
-      console.error('Ошибка веб сокет сервера:', error);
-      clients.delete(client);
+  await fastify.register(websocket);
+  
+  // REST API маршруты
+  await fastify.register(alertRoutes);
+  
+  // WebSocket маршрут
+  fastify.register(async function (fastify) {
+    fastify.get('/ws', { websocket: true }, async (connection) => {
+      clients.add(connection.socket);
+      console.log(`Клиент подключен. Всего клиентов: ${clients.size}`);
+      connection.socket.send(JSON.stringify(await getLatestMessage()))
+      
+      connection.socket.on('close', () => {
+        clients.delete(connection.socket);
+        console.log(`Клиент отключен. Всего клиентов: ${clients.size}`);
+      });
     });
   });
-  
-  setInterval(() => {
-    clients.forEach((client) => {
-      if (!client.isAlive) {
-        console.log('Отключение клиента');
-        client.ws.terminate();
-        clients.delete(client);
-        return;
-      }
-      
-      client.isAlive = false;
-      client.ws.ping();
-    });
-  }, 30000);
   
   const broadcastToClients = (data: any) => {
     const message = JSON.stringify(data);
     clients.forEach((client) => {
-      if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(message);
+      if (client.readyState === 1) {
+        client.send(message);
       }
     });
     console.log(`Отправлено клиентам ${clients.size}:`, data);
   };
   
   setInterval(async () => {
-    const status = await checkRSCHSStatus()
-    if (!status) return
-
+    const status = await checkRSCHSStatus();
+    if (!status) return;
+    
     broadcastToClients(status);
   }, 10000);
+  
+  try {
+    await fastify.listen({ port: config.port, host: '0.0.0.0' });
+    console.log(`Сервер запущен на порту ${config.port}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
 })();
