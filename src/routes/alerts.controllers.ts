@@ -8,9 +8,10 @@ export async function getLatestMessage(): Promise<Message | TMessage | null> {
 
   let lastMessage: Message | TMessage | null = latestMessage
   if (!lastMessage) {
-    lastMessage = await messageRepo.findOne({
-      order: { date: 'DESC' }
-    });
+    lastMessage = await messageRepo
+      .createQueryBuilder('message')
+      .orderBy('message.date', 'DESC')
+      .getOne();
   }
   return lastMessage;
 }
