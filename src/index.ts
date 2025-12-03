@@ -10,7 +10,7 @@ const clients = new Set<any>();
 
 (async () => {
   await initializeDatabase();
-  
+
   const fastify = Fastify({ logger: true });
   
   await fastify.register(websocket);
@@ -47,7 +47,7 @@ const clients = new Set<any>();
     if (!status) return;
     
     broadcastToClients(status);
-  }, 10000);
+  }, config.checkTimeout);
   
   try {
     await fastify.listen({ port: config.port, host: '0.0.0.0' });

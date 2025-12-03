@@ -23,7 +23,7 @@ export async function checkRSCHSStatus() {
 
     const filteredMessage = keywords.some(keyword => $messageBlock.includes(keyword))
     if (!filteredMessage) return;
-    
+
     let typeMessage: string | null = null
     if (config.keywords.start.some(keyword => $messageBlock.includes(keyword))) {
       typeMessage = 'start'

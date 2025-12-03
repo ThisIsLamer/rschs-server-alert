@@ -6,6 +6,7 @@ export const config = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   telegramChannelURL: process.env.TELEGRAM_CHANNEL_URL || '',
+  checkTimeout: Number(process.env.CHECK_TIMEOUT || 60000),
   database: {
     type: process.env.DB_TYPE || 'sqlite',
     database: process.env.DB_DATABASE || 'database.sqlite',
