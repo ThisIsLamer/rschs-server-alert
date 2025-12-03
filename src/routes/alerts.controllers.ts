@@ -10,6 +10,7 @@ export async function getLatestMessage(): Promise<Message | TMessage | null> {
   if (!lastMessage) {
     lastMessage = await messageRepo
       .createQueryBuilder('message')
+      .select(['message.message', 'message.date', 'message.type'])
       .orderBy('message.date', 'DESC')
       .getOne();
   }
@@ -37,17 +38,14 @@ export async function alertRoutes(fastify: FastifyInstance) {
     const { page = 1, limit = 10 } = request.query as { page?: number; limit?: number };
     
     const [messages, total] = await messageRepo.findAndCount({
+      select: ['message', 'date', 'type'],
       order: { date: 'DESC' },
       skip: (page - 1) * limit,
       take: limit
     });
     
     return {
-      data: messages.map(msg => ({
-        message: msg.message,
-        date: msg.date,
-        type: msg.type
-      })),
+      data: messages,
       pagination: {
         page,
         limit,
