@@ -8,3 +8,7 @@ services:
     environment:
       TZ: Europe/Moscow
     restart: unless-stopped
+    volumes:
+      - ./data:/root/app/app/data
+    ports:
+      - "3000:3000"
