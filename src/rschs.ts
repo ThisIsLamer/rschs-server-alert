@@ -19,8 +19,15 @@ export async function checkRSCHSStatus() {
     if (!message) return;
 
     const $message = cheerio.load(message)
-    const $messageBlock = $message('.tgme_widget_message_text').text().replace(/\n/g, ' ').trim()
     const $messageDate = $message('time').attr('datetime')
+    
+    // const $messageBlock = $message('.tgme_widget_message_text').text()
+
+    let $messageBlockPayload = $message('.tgme_widget_message_text').html()
+    if (!$messageBlockPayload) return
+
+    $messageBlockPayload = $messageBlockPayload.replaceAll(/<br>/g, ' ')
+    const $messageBlock = cheerio.load($messageBlockPayload).root().text().trim()
 
     if (locations.length) {
       const filteredMessage = locations.some(location => $messageBlock.includes(location))
@@ -39,7 +46,7 @@ export async function checkRSCHSStatus() {
     }
 
     messages.push({
-      message: $messageBlock,
+      message: $messageBlock.replace('\n', '. '),
       date: new Date($messageDate as string),
       type: typeMessage
     })
