@@ -7,6 +7,7 @@ export type TMessage = { message: string, date: Date, type: string | null }
 
 export let latestMessage: TMessage | null = null
 
+const locations = config.keywords.location;
 const keywords = [...config.keywords.start, ...config.keywords.stop]
 export async function checkRSCHSStatus() {
   const html = await fetch(config.telegramChannelURL as string)
@@ -20,6 +21,11 @@ export async function checkRSCHSStatus() {
     const $message = cheerio.load(message)
     const $messageBlock = $message('.tgme_widget_message_text').text().replace(/\n/g, ' ').trim()
     const $messageDate = $message('time').attr('datetime')
+
+    if (locations.length) {
+      const filteredMessage = locations.some(location => $messageBlock.includes(location))
+      if (!filteredMessage) return;
+    }
 
     const filteredMessage = keywords.some(keyword => $messageBlock.includes(keyword))
     if (!filteredMessage) return;

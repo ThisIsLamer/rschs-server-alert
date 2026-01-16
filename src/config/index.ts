@@ -14,6 +14,7 @@ export const config = {
     logging: process.env.DB_LOGGING === 'true' || false
   },
   keywords: {
+    location: (process.env.LIST_NAME_LOCATION || '').split(','),
     start: (process.env.LIST_START_KEYWORDS || '').split(','),
     stop: (process.env.LIST_STOP_KEYWORDS || '').split(',')
   }
