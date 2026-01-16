@@ -42,7 +42,6 @@ const clients = new Set<any>();
     console.log(`Отправлено клиентам ${clients.size}:`, data);
   };
   
-  await checkRSCHSStatus();
   setInterval(async () => {
     const status = await checkRSCHSStatus();
     if (!status) return;
