@@ -33,7 +33,8 @@ export async function checkRSCHSStatus() {
     let typeMessage: string | null = null
     if (config.keywords.start.some(keyword => $messageBlock.includes(keyword))) {
       typeMessage = 'start'
-    } else if (config.keywords.stop.some(keyword => $messageBlock.includes(keyword))) {
+    } 
+    if (config.keywords.stop.some(keyword => $messageBlock.includes(keyword))) {
       typeMessage = 'stop'
     }
 
