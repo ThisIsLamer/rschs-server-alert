@@ -11,6 +11,8 @@ const locations = config.keywords.location;
 const keywords = [...config.keywords.start, ...config.keywords.stop]
 export async function checkRSCHSStatus() {
   const html = await fetch(config.telegramChannelURL as string)
+    .catch((error) => console.error(error))
+  if (!html) return
   const $ = cheerio.load(await html.text());
 
   const messages: TMessage[] = []
