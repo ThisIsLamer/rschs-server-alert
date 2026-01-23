@@ -4,7 +4,7 @@ import { config } from './config';
 import { checkRSCHSStatus } from './rschs';
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
-import { alertRoutes, getLatestMessage } from './routes/alerts.controllers';
+import { alertRoutes } from './routes/alerts.controllers';
 
 const clients = new Set<any>();
 
@@ -23,7 +23,7 @@ const clients = new Set<any>();
     fastify.get('/ws', { websocket: true }, async (connection) => {
       clients.add(connection.socket);
       console.log(`Клиент подключен. Всего клиентов: ${clients.size}`);
-      connection.socket.send(JSON.stringify(await getLatestMessage()))
+      // connection.socket.send(JSON.stringify(await getLatestMessage()))
       
       connection.socket.on('close', () => {
         clients.delete(connection.socket);
